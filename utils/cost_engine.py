@@ -86,7 +86,7 @@ Generate the HTML cost section now for: {treatment.get('name', 'Unknown')}"""
     try:
         client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-opus-4-6",
             max_tokens=2000,
             messages=[{"role": "user", "content": final_prompt}]
         )
@@ -175,7 +175,7 @@ Use Indian number formatting: ₹1,50,000 not ₹150,000. Return ONLY the HTML, 
     try:
         client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-opus-4-6",
             max_tokens=1500,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -221,7 +221,7 @@ Extract ALL treatment pricing data from the above content. Return a JSON array."
     try:
         client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-opus-4-6",
             max_tokens=4000,
             messages=[{"role": "user", "content": final_prompt}]
         )
@@ -282,7 +282,7 @@ Convert all amounts to INR if they aren't already."""
     try:
         client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-opus-4-6",
             max_tokens=4000,
             messages=[{"role": "user", "content": content_parts}]
         )
