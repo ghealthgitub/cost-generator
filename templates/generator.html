@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator — Cost Generator</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:#F0F2F5;color:#1F2937;min-height:100vh}
+        .topbar{background:linear-gradient(135deg,#0B2545,#13315C);color:white;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(11,37,69,.25);position:sticky;top:0;z-index:100}
+        .topbar-left{display:flex;align-items:center;gap:12px}
+        .topbar-logo{width:34px;height:34px;border-radius:9px;overflow:hidden;flex-shrink:0}
+        .topbar-logo img{width:100%;height:100%;object-fit:cover}
+        .topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+        .topbar-right{display:flex;align-items:center;gap:14px;font-size:13px}
+        .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+        .badge-green{background:rgba(16,185,129,.2);color:#6EE7B7}
+        .badge-amber{background:rgba(251,191,36,.2);color:#FCD34D}
+        .topbar-nav{display:flex;gap:4px}
+        .topbar-nav a{color:rgba(255,255,255,.7);text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;transition:all .2s}
+        .topbar-nav a:hover,.topbar-nav a.active{background:rgba(255,255,255,.1);color:white}
+        .btn-sm{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;text-decoration:none}
+        .btn-ghost{background:rgba(255,255,255,.1);color:white}
+
+        .main{max-width:1200px;margin:24px auto;padding:0 20px}
+
+        /* Quick Estimate Bar */
+        .estimate-bar{background:white;border-radius:12px;padding:16px 20px;border:1px solid #E5E7EB;margin-bottom:20px;display:flex;gap:12px;align-items:center}
+        .estimate-bar .icon{font-size:20px}
+        .estimate-bar input{flex:1;padding:10px 14px;border:2px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit}
+        .estimate-bar input:focus{outline:none;border-color:#0EA5A0;box-shadow:0 0 0 3px rgba(14,165,160,.08)}
+        .btn{padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:all .2s}
+        .btn-primary{background:linear-gradient(135deg,#0B2545,#13315C);color:white}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,37,69,.2)}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .btn-teal{background:#0EA5A0;color:white}
+        .btn-teal:hover{background:#0D9488}
+        .btn-success{background:#059669;color:white}
+        .btn-success:hover{background:#047857}
+        .btn-outline{background:white;color:#374151;border:2px solid #E5E7EB}
+        .btn-outline:hover{border-color:#0EA5A0;color:#0EA5A0}
+        .btn-orange{background:#F26522;color:white}
+        .btn-orange:hover{background:#DC580E}
+
+        /* Layout */
+        .layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+        .card{background:white;border-radius:12px;padding:24px;border:1px solid #E5E7EB}
+        .card h2{font-family:'Playfair Display',serif;font-size:18px;color:#0B2545;margin-bottom:16px}
+        .card h3{font-size:15px;font-weight:600;color:#0B2545;margin-bottom:12px}
+
+        /* Left panel: treatment list */
+        .filter-row{display:flex;gap:8px;margin-bottom:12px}
+        .filter-row select,.filter-row input{flex:1;padding:8px 12px;border:2px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit}
+        .filter-row select:focus,.filter-row input:focus{outline:none;border-color:#0EA5A0}
+
+        .treatment-list{max-height:calc(100vh - 280px);overflow-y:auto}
+        .treatment-item{padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .15s;border:1px solid transparent;margin-bottom:4px}
+        .treatment-item:hover{background:#F9FAFB;border-color:#E5E7EB}
+        .treatment-item.active{background:#F0FDFA;border-color:#0EA5A0}
+        .treatment-item .name{font-size:13px;font-weight:600;color:#0B2545;margin-bottom:2px}
+        .treatment-item .meta{font-size:11px;color:#9CA3AF}
+        .treatment-item .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
+        .status-none{background:#D1D5DB}
+        .status-draft{background:#F59E0B}
+        .status-approved{background:#059669}
+
+        /* Right panel: generator */
+        .right-panel{display:flex;flex-direction:column;gap:20px}
+
+        .article-preview{max-height:200px;overflow-y:auto;padding:12px;background:#F9FAFB;border-radius:8px;font-size:13px;line-height:1.6;color:#4B5563;border:1px solid #E5E7EB}
+
+        .cost-preview{border:2px solid #E5E7EB;border-radius:8px;padding:20px;min-height:200px;background:#FAFAFA;transition:border-color .2s}
+        .cost-preview:focus{outline:none;border-color:#0EA5A0}
+        /* Style the generated HTML inside preview */
+        .cost-preview .cost-section{font-size:14px;line-height:1.7}
+        .cost-preview .cost-summary{color:#374151;margin-bottom:16px}
+        .cost-preview .cost-table{width:100%;border-collapse:collapse;margin:16px 0}
+        .cost-preview .cost-table th{background:#0B2545;color:white;padding:10px 14px;text-align:left;font-size:13px}
+        .cost-preview .cost-table td{padding:10px 14px;border-bottom:1px solid #E5E7EB;font-size:13px}
+        .cost-preview .cost-table tfoot td{font-weight:700;background:#F0FDFA;border-top:2px solid #0EA5A0}
+        .cost-preview .cost-note{font-size:13px;color:#6B7280;font-style:italic;margin-top:12px}
+        /* Quick estimate styling */
+        .cost-preview .estimate-result h3{font-size:16px;color:#0B2545;margin-bottom:8px}
+        .cost-preview .estimate-range{font-size:18px;color:#059669;margin-bottom:12px}
+        .cost-preview .estimate-summary{color:#374151;margin-bottom:12px}
+        .cost-preview .estimate-note{font-size:13px;color:#6B7280;margin-top:8px}
+        .cost-preview .estimate-confidence{font-size:12px;color:#9CA3AF;margin-top:8px}
+
+        .action-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .status-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
+        .status-badge.none{background:#F3F4F6;color:#6B7280}
+        .status-badge.draft{background:#FEF3C7;color:#D97706}
+        .status-badge.approved{background:#ECFDF5;color:#059669}
+
+        .status-msg{padding:12px 16px;border-radius:8px;font-size:13px;display:none}
+        .status-msg.error{background:#FEE2E2;color:#991B1B;border:1px solid #FECACA;display:block}
+        .status-msg.success{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;display:block}
+        .status-msg.info{background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;display:block}
+
+        .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .empty-state{text-align:center;padding:60px 20px;color:#9CA3AF}
+        .empty-state .icon{font-size:48px;margin-bottom:12px}
+
+        .html-editor{width:100%;min-height:200px;padding:12px;border:2px solid #E5E7EB;border-radius:8px;font-family:'DM Sans',monospace;font-size:13px;line-height:1.6;resize:vertical;display:none}
+        .html-editor:focus{outline:none;border-color:#0EA5A0}
+
+        /* Estimate modal */
+        .estimate-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(11,37,69,.5);z-index:200;justify-content:center;align-items:center}
+        .estimate-modal.show{display:flex}
+        .estimate-modal-content{background:white;border-radius:16px;padding:28px;width:90%;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+        .estimate-modal-content h2{font-family:'Playfair Display',serif;font-size:20px;color:#0B2545;margin-bottom:16px}
+        .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#6B7280;padding:4px 8px}
+
+        @media(max-width:900px){.layout{grid-template-columns:1fr}.treatment-list{max-height:300px}}
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo"><img src="/static/logo-small.png" alt=""></div>
+            <div class="topbar-title">Cost Generator</div>
+        </div>
+        <div class="topbar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ingest">Ingest Data</a>
+            <a href="/generator" class="active">Generator</a>
+            {% if user.role == 'super_admin' %}<a href="/prompts">Prompts</a>{% endif %}
+            <a href="/api-docs">API</a>
+        </div>
+        <div class="topbar-right">
+            <span class="badge {{ 'badge-green' if claude_available else 'badge-amber' }}">{{ '● Claude Ready' if claude_available else '○ No API Key' }}</span>
+            <span>{{ user.name or user.email }}</span>
+            <a href="/logout" class="btn-sm btn-ghost">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- Quick Estimate Bar -->
+        <div class="estimate-bar">
+            <div class="icon">⚡</div>
+            <input type="text" id="quick-input" placeholder="Counselor Quick Estimate — type any procedure name (e.g. Robotic Prostatectomy, PET-CT Scan, CABG...)" onkeydown="if(event.key==='Enter')quickEstimate()">
+            <button class="btn btn-teal" onclick="quickEstimate()">Get Estimate</button>
+        </div>
+
+        <div class="layout">
+            <!-- Left: Treatment List -->
+            <div class="card" style="padding:16px">
+                <div class="filter-row">
+                    <select id="specialty-filter" onchange="loadTreatments()">
+                        <option value="">All Specialties</option>
+                        {% for s in specialties %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="text" id="search-filter" placeholder="Search treatments..." oninput="filterList()">
+                </div>
+                <div class="treatment-list" id="treatment-list">
+                    <div class="empty-state" style="padding:30px">
+                        <div class="icon">📋</div>
+                        <p style="font-size:13px">Select a specialty to load treatments</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Generator Panel -->
+            <div class="right-panel">
+                <div class="card" id="generator-panel">
+                    <div class="empty-state" id="empty-gen">
+                        <div class="icon">💰</div>
+                        <p style="font-size:14px;line-height:1.6">Select a treatment from the left panel to generate a cost section,<br>or use the Quick Estimate bar for ad-hoc queries.</p>
+                    </div>
+
+                    <div id="gen-content" style="display:none">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+                            <div>
+                                <h2 id="gen-title" style="margin-bottom:4px"></h2>
+                                <span style="font-size:13px;color:#6B7280" id="gen-specialty"></span>
+                            </div>
+                            <span class="status-badge none" id="gen-status-badge">Not Generated</span>
+                        </div>
+
+                        <!-- Article Preview -->
+                        <h3>Treatment Article</h3>
+                        <div class="article-preview" id="article-preview">Loading...</div>
+
+                        <!-- Generate Button -->
+                        <div style="margin:16px 0">
+                            <button class="btn btn-primary" id="generate-btn" onclick="generateCost()">
+                                🧠 Generate Cost Section
+                            </button>
+                            <span id="gen-note" style="font-size:12px;color:#9CA3AF;margin-left:8px"></span>
+                        </div>
+
+                        <!-- Status -->
+                        <div id="gen-status" class="status-msg"></div>
+
+                        <!-- Preview / Edit -->
+                        <div id="preview-section" style="display:none">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                                <h3>Cost Section Preview</h3>
+                                <button class="btn-sm btn-outline" onclick="toggleEditor()" id="edit-toggle-btn">Edit HTML</button>
+                            </div>
+                            <div class="cost-preview" id="cost-preview"></div>
+                            <textarea class="html-editor" id="html-editor"></textarea>
+
+                            <div class="action-bar" style="margin-top:12px">
+                                <button class="btn btn-success" onclick="saveCostSection('approved')">✓ Approve &amp; Publish</button>
+                                <button class="btn btn-outline" onclick="saveCostSection('draft')">Save as Draft</button>
+                                <button class="btn btn-primary" onclick="generateCost()" style="margin-left:auto">🔄 Regenerate</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Estimate Modal -->
+    <div class="estimate-modal" id="estimate-modal">
+        <div class="estimate-modal-content">
+            <button class="modal-close" onclick="closeEstimateModal()">×</button>
+            <h2>⚡ Quick Cost Estimate</h2>
+            <div class="cost-preview" id="estimate-result" style="margin-top:16px">
+                <div class="empty-state" style="padding:20px"><span class="spinner" style="border-color:rgba(0,0,0,.1);border-top-color:#0EA5A0"></span> Generating estimate...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allTreatments = [];
+        let selectedTreatmentId = null;
+        let currentGenId = null;
+        let isEditing = false;
+
+        // ── Load Treatments ──
+        async function loadTreatments() {
+            const specId = document.getElementById('specialty-filter').value;
+            const url = specId ? `/api/treatments?specialty_id=${specId}` : '/api/treatments';
+            try {
+                const res = await fetch(url);
+                allTreatments = await res.json();
+                renderList();
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+        }
+
+        function filterList() {
+            renderList();
+        }
+
+        function renderList() {
+            const query = document.getElementById('search-filter').value.toLowerCase();
+            const filtered = query
+                ? allTreatments.filter(t => t.name.toLowerCase().includes(query))
+                : allTreatments;
+
+            const list = document.getElementById('treatment-list');
+            if (!filtered.length) {
+                list.innerHTML = '<div class="empty-state" style="padding:20px"><p style="font-size:13px">No treatments found</p></div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(t => {
+                const statusCls = t.cost_status === 'approved' ? 'approved' : t.cost_status === 'draft' ? 'draft' : 'none';
+                const active = t.id === selectedTreatmentId ? 'active' : '';
+                return `<div class="treatment-item ${active}" onclick="selectTreatment(${t.id})">
+                    <div class="name"><span class="status-dot status-${statusCls}"></span>${t.name}</div>
+                    <div class="meta">${t.specialty_name || '—'} · ${statusCls === 'none' ? 'No cost data' : statusCls}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ── Select Treatment ──
+        async function selectTreatment(id) {
+            selectedTreatmentId = id;
+            const t = allTreatments.find(x => x.id === id);
+            if (!t) return;
+
+            document.getElementById('empty-gen').style.display = 'none';
+            document.getElementById('gen-content').style.display = 'block';
+            document.getElementById('gen-title').textContent = t.name;
+            document.getElementById('gen-specialty').textContent = t.specialty_name || '';
+            document.getElementById('gen-status').style.display = 'none';
+            document.getElementById('preview-section').style.display = 'none';
+
+            renderList(); // Update active highlight
+
+            // Load article preview
+            document.getElementById('article-preview').textContent = 'Loading article...';
+            try {
+                // Fetch full treatment (with content)
+                const specId = document.getElementById('specialty-filter').value;
+                const url = specId ? `/api/treatments?specialty_id=${specId}` : '/api/treatments';
+                // We need the content — re-fetch with a dedicated endpoint or use existing data
+                // For now, show name
+                document.getElementById('article-preview').textContent = `Treatment: ${t.name}\nSpecialty: ${t.specialty_name || '—'}\n\n(Full article content will be loaded from the database and sent to Claude for analysis)`;
+            } catch(e) {}
+
+            // Check existing cost section
+            try {
+                const res = await fetch(`/api/cost-section/${id}`);
+                const data = await res.json();
+                if (data.exists) {
+                    currentGenId = data.id;
+                    const html = data.edited_html || data.generated_html || '';
+                    showCostPreview(html);
+                    updateStatusBadge(data.status);
+                    document.getElementById('gen-note').textContent = `Last generated: ${data.updated_at ? new Date(data.updated_at).toLocaleDateString() : '—'}`;
+                } else {
+                    currentGenId = null;
+                    updateStatusBadge('none');
+                    document.getElementById('gen-note').textContent = 'No cost section yet — click Generate to create one.';
+                }
+            } catch(e) {
+                currentGenId = null;
+                updateStatusBadge('none');
+            }
+        }
+
+        function updateStatusBadge(status) {
+            const badge = document.getElementById('gen-status-badge');
+            badge.className = 'status-badge ' + status;
+            badge.textContent = status === 'approved' ? 'Approved' : status === 'draft' ? 'Draft' : 'Not Generated';
+        }
+
+        // ── Generate Cost Section ──
+        async function generateCost() {
+            if (!selectedTreatmentId) return;
+            const btn = document.getElementById('generate-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+            showGenStatus('info', '<span class="spinner" style="border-color:rgba(30,64,175,.2);border-top-color:#2563EB"></span> Claude is reading the treatment article and analyzing cost components...');
+
+            try {
+                const res = await fetch('/api/generate-cost', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ treatment_id: selectedTreatmentId })
+                });
+                const data = await res.json();
+                btn.disabled = false;
+                btn.innerHTML = '🧠 Generate Cost Section';
+
+                if (data.error) {
+                    showGenStatus('error', data.error);
+                    return;
+                }
+
+                currentGenId = data.gen_id;
+                showCostPreview(data.html);
+                updateStatusBadge('draft');
+                const calNote = data.had_calibration_data ? '(used real hospital pricing data)' : '(no calibration data — based on AI knowledge)';
+                showGenStatus('success', `Cost section generated for ${data.treatment_name}. ${calNote} Review and approve below.`);
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '🧠 Generate Cost Section';
+                showGenStatus('error', 'Generation failed: ' + e.message);
+            }
+        }
+
+        function showCostPreview(html) {
+            document.getElementById('cost-preview').innerHTML = html;
+            document.getElementById('html-editor').value = html;
+            document.getElementById('preview-section').style.display = 'block';
+            isEditing = false;
+            document.getElementById('html-editor').style.display = 'none';
+            document.getElementById('cost-preview').style.display = 'block';
+            document.getElementById('edit-toggle-btn').textContent = 'Edit HTML';
+        }
+
+        function toggleEditor() {
+            isEditing = !isEditing;
+            if (isEditing) {
+                document.getElementById('html-editor').style.display = 'block';
+                document.getElementById('cost-preview').style.display = 'none';
+                document.getElementById('edit-toggle-btn').textContent = 'Preview';
+                document.getElementById('html-editor').value = document.getElementById('cost-preview').innerHTML;
+            } else {
+                document.getElementById('cost-preview').innerHTML = document.getElementById('html-editor').value;
+                document.getElementById('html-editor').style.display = 'none';
+                document.getElementById('cost-preview').style.display = 'block';
+                document.getElementById('edit-toggle-btn').textContent = 'Edit HTML';
+            }
+        }
+
+        // ── Save ──
+        async function saveCostSection(status) {
+            if (!currentGenId) { showGenStatus('error', 'No generated cost section to save'); return; }
+            const html = isEditing
+                ? document.getElementById('html-editor').value
+                : document.getElementById('cost-preview').innerHTML;
+
+            try {
+                const res = await fetch(`/api/cost-section/${currentGenId}/save`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ html, status })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    updateStatusBadge(status);
+                    showGenStatus('success', status === 'approved'
+                        ? '✓ Cost section approved and published! It\'s now available via the API.'
+                        : 'Saved as draft.');
+                    // Update list item status
+                    const t = allTreatments.find(x => x.id === selectedTreatmentId);
+                    if (t) t.cost_status = status;
+                    renderList();
+                } else {
+                    showGenStatus('error', 'Save failed');
+                }
+            } catch(e) { showGenStatus('error', 'Save failed: ' + e.message); }
+        }
+
+        function showGenStatus(type, msg) {
+            const el = document.getElementById('gen-status');
+            el.className = 'status-msg ' + type;
+            el.innerHTML = msg;
+            el.style.display = 'block';
+        }
+
+        // ── Quick Estimate ──
+        async function quickEstimate() {
+            const procedure = document.getElementById('quick-input').value.trim();
+            if (!procedure) return;
+
+            document.getElementById('estimate-modal').classList.add('show');
+            document.getElementById('estimate-result').innerHTML = '<div style="text-align:center;padding:30px"><span class="spinner" style="border-color:rgba(0,0,0,.1);border-top-color:#0EA5A0;width:24px;height:24px"></span><p style="margin-top:12px;color:#6B7280;font-size:14px">Claude is analyzing cost components for <strong>' + procedure + '</strong>...</p></div>';
+
+            try {
+                const res = await fetch('/api/quick-estimate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ procedure })
+                });
+                const data = await res.json();
+                if (data.error) {
+                    document.getElementById('estimate-result').innerHTML = '<div style="color:#991B1B;padding:16px">' + data.error + '</div>';
+                    return;
+                }
+                document.getElementById('estimate-result').innerHTML = data.html;
+            } catch(e) {
+                document.getElementById('estimate-result').innerHTML = '<div style="color:#991B1B;padding:16px">Estimate failed: ' + e.message + '</div>';
+            }
+        }
+
+        function closeEstimateModal() {
+            document.getElementById('estimate-modal').classList.remove('show');
+        }
+
+        // Close modal on outside click
+        document.getElementById('estimate-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeEstimateModal();
+        });
+
+        // Load all treatments on page load
+        loadTreatments();
+    </script>
+</body>
+</html>

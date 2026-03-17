@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingest Data — Cost Generator</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:#F0F2F5;color:#1F2937;min-height:100vh}
+        .topbar{background:linear-gradient(135deg,#0B2545,#13315C);color:white;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(11,37,69,.25);position:sticky;top:0;z-index:100}
+        .topbar-left{display:flex;align-items:center;gap:12px}
+        .topbar-logo{width:34px;height:34px;border-radius:9px;overflow:hidden;flex-shrink:0}
+        .topbar-logo img{width:100%;height:100%;object-fit:cover}
+        .topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+        .topbar-right{display:flex;align-items:center;gap:14px;font-size:13px}
+        .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+        .badge-green{background:rgba(16,185,129,.2);color:#6EE7B7}
+        .badge-amber{background:rgba(251,191,36,.2);color:#FCD34D}
+        .topbar-nav{display:flex;gap:4px}
+        .topbar-nav a{color:rgba(255,255,255,.7);text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;transition:all .2s}
+        .topbar-nav a:hover,.topbar-nav a.active{background:rgba(255,255,255,.1);color:white}
+        .btn-sm{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;text-decoration:none}
+        .btn-ghost{background:rgba(255,255,255,.1);color:white}
+
+        .main{max-width:1100px;margin:24px auto;padding:0 20px}
+        .card{background:white;border-radius:12px;padding:24px;border:1px solid #E5E7EB;margin-bottom:20px}
+        .card h2{font-family:'Playfair Display',serif;font-size:18px;color:#0B2545;margin-bottom:16px}
+
+        .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #E5E7EB;padding-bottom:0}
+        .tab{padding:10px 20px;font-size:14px;font-weight:600;color:#6B7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+        .tab:hover{color:#0B2545}
+        .tab.active{color:#0EA5A0;border-bottom-color:#0EA5A0}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+
+        .upload-zone{border:2px dashed #D1D5DB;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+        .upload-zone:hover,.upload-zone.dragover{border-color:#0EA5A0;background:#F0FDFA}
+        .upload-zone .icon{font-size:36px;margin-bottom:8px}
+        .upload-zone p{font-size:14px;color:#6B7280}
+        .upload-zone .hint{font-size:12px;color:#9CA3AF;margin-top:4px}
+
+        .url-area{margin-bottom:16px}
+        .url-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+        .url-input{flex:1;padding:10px 14px;border:2px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
+        .url-input:focus{outline:none;border-color:#0EA5A0;box-shadow:0 0 0 3px rgba(14,165,160,.08)}
+        .url-remove{width:32px;height:32px;border:none;background:#FEE2E2;color:#DC2626;border-radius:6px;cursor:pointer;font-size:16px;flex-shrink:0}
+        .add-url-btn{padding:8px 16px;background:#F0FDF4;color:#166534;border:1px dashed #86EFAC;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
+
+        .btn{padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:all .2s}
+        .btn-primary{background:linear-gradient(135deg,#0B2545,#13315C);color:white}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,37,69,.2)}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .btn-success{background:#059669;color:white}
+        .btn-success:hover{background:#047857}
+        .btn-outline{background:white;color:#374151;border:2px solid #E5E7EB}
+        .btn-outline:hover{border-color:#0EA5A0;color:#0EA5A0}
+
+        .preview-area{display:none;margin-top:20px}
+        .preview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .preview-count{font-size:13px;color:#6B7280}
+        .preview-table{width:100%;border-collapse:collapse;font-size:13px}
+        .preview-table th{background:#F9FAFB;padding:10px 12px;text-align:left;font-weight:600;color:#374151;border-bottom:2px solid #E5E7EB}
+        .preview-table td{padding:10px 12px;border-bottom:1px solid #F3F4F6}
+        .preview-table tr:hover td{background:#F9FAFB}
+        .preview-table .remove-row{color:#DC2626;cursor:pointer;font-size:12px}
+        .preview-table .remove-row:hover{text-decoration:underline}
+
+        .status-msg{padding:12px 16px;border-radius:8px;margin-top:12px;font-size:13px;display:none}
+        .status-msg.error{background:#FEE2E2;color:#991B1B;border:1px solid #FECACA;display:block}
+        .status-msg.success{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;display:block}
+        .status-msg.info{background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;display:block}
+
+        .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .sources-list{margin-top:20px}
+        .source-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6;font-size:13px}
+        .source-item:last-child{border-bottom:none}
+        .source-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+        .source-icon.csv{background:#FEF3C7;color:#D97706}
+        .source-icon.url{background:#DBEAFE;color:#2563EB}
+        .source-icon.image{background:#FCE7F3;color:#DB2777}
+        .source-text{flex:1;min-width:0}
+        .source-text strong{font-weight:600;color:#0B2545;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .source-text span{font-size:11px;color:#9CA3AF}
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo"><img src="/static/logo-small.png" alt=""></div>
+            <div class="topbar-title">Cost Generator</div>
+        </div>
+        <div class="topbar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ingest" class="active">Ingest Data</a>
+            <a href="/generator">Generator</a>
+            {% if user.role == 'super_admin' %}<a href="/prompts">Prompts</a>{% endif %}
+            <a href="/api-docs">API</a>
+        </div>
+        <div class="topbar-right">
+            <span class="badge {{ 'badge-green' if claude_available else 'badge-amber' }}">{{ '● Claude Ready' if claude_available else '○ No API Key' }}</span>
+            <span>{{ user.name or user.email }}</span>
+            <a href="/logout" class="btn-sm btn-ghost">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h2>Ingest Hospital Pricing Data</h2>
+            <p style="font-size:14px;color:#6B7280;margin-bottom:20px">Feed the cost engine with real hospital pricing. Claude will extract and standardize the data for you.</p>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('csv')">📄 CSV / Excel Upload</button>
+                <button class="tab" onclick="switchTab('url')">🌐 URL Scraper</button>
+                <button class="tab" onclick="switchTab('image')">📸 Image / PDF Upload</button>
+            </div>
+
+            <!-- CSV TAB -->
+            <div id="tab-csv" class="tab-content active">
+                <div class="upload-zone" id="csv-drop" onclick="document.getElementById('csv-file').click()">
+                    <div class="icon">📊</div>
+                    <p>Drop your CSV or Excel file here, or click to browse</p>
+                    <div class="hint">Supports .csv, .xlsx, .xls — Hospital pricing, package lists, rate cards</div>
+                    <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleCsvUpload(this)">
+                </div>
+                <div id="csv-filename" style="font-size:13px;color:#059669;margin-bottom:8px;display:none"></div>
+                <button class="btn btn-primary" id="csv-extract-btn" onclick="extractCsv()" disabled>
+                    Extract Pricing Data
+                </button>
+            </div>
+
+            <!-- URL TAB -->
+            <div id="tab-url" class="tab-content">
+                <p style="font-size:13px;color:#6B7280;margin-bottom:12px">Paste hospital pricing page URLs. Claude will scrape and extract cost data.</p>
+                <div class="url-area" id="url-area">
+                    <div class="url-row">
+                        <input class="url-input" type="url" placeholder="https://hospital.com/packages or pricing page">
+                        <button class="url-remove" onclick="this.parentElement.remove()" title="Remove">×</button>
+                    </div>
+                </div>
+                <button class="add-url-btn" onclick="addUrlRow()" style="margin-bottom:16px">+ Add another URL</button><br>
+                <button class="btn btn-primary" onclick="extractUrls()">Scrape &amp; Extract</button>
+            </div>
+
+            <!-- IMAGE TAB -->
+            <div id="tab-image" class="tab-content">
+                <div class="upload-zone" id="image-drop" onclick="document.getElementById('image-files').click()">
+                    <div class="icon">📸</div>
+                    <p>Drop rate card images or PDFs here, or click to browse</p>
+                    <div class="hint">Supports PNG, JPG, PDF — Hospital rate cards, package brochures, price lists</div>
+                    <input type="file" id="image-files" accept=".png,.jpg,.jpeg,.webp,.pdf" multiple style="display:none" onchange="handleImageUpload(this)">
+                </div>
+                <div id="image-filenames" style="font-size:13px;color:#059669;margin-bottom:8px;display:none"></div>
+                <button class="btn btn-primary" id="image-extract-btn" onclick="extractImages()" disabled>
+                    Extract from Images
+                </button>
+            </div>
+
+            <!-- Status -->
+            <div id="status-msg" class="status-msg"></div>
+
+            <!-- Preview -->
+            <div id="preview-area" class="preview-area">
+                <div class="preview-header">
+                    <h3 style="font-size:15px;font-weight:600;color:#0B2545">Extracted Data Preview</h3>
+                    <span class="preview-count" id="preview-count"></span>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>Treatment</th>
+                                <th>Hospital</th>
+                                <th>City</th>
+                                <th>Cost Range (₹)</th>
+                                <th>Stay</th>
+                                <th>Components</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-body"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:8px">
+                    <button class="btn btn-success" onclick="confirmSave()">✓ Confirm &amp; Save to Database</button>
+                    <button class="btn btn-outline" onclick="clearPreview()">✕ Discard</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sources -->
+        {% if sources %}
+        <div class="card">
+            <h2>Recent Uploads</h2>
+            <div class="sources-list">
+                {% for s in sources %}
+                <div class="source-item">
+                    <div class="source-icon {{ s.source_type }}">
+                        {{ '📊' if s.source_type == 'csv' else '🌐' if s.source_type == 'url' else '📸' }}
+                    </div>
+                    <div class="source-text">
+                        <strong>{{ s.source_name or 'Untitled' }}</strong>
+                        <span>{{ s.record_count }} entries · {{ s.uploaded_by }} · {{ s.created_at.strftime('%d %b %Y, %H:%M') if s.created_at else '' }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        let extractedEntries = [];
+        let currentSourceName = '';
+        let currentSourceType = '';
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        // ── CSV Upload ──
+        let csvFile = null;
+        function handleCsvUpload(input) {
+            csvFile = input.files[0];
+            if (csvFile) {
+                document.getElementById('csv-filename').textContent = '📎 ' + csvFile.name;
+                document.getElementById('csv-filename').style.display = 'block';
+                document.getElementById('csv-extract-btn').disabled = false;
+            }
+        }
+
+        async function extractCsv() {
+            if (!csvFile) return;
+            showStatus('info', '<span class="spinner"></span> Uploading and extracting pricing data...');
+            const fd = new FormData();
+            fd.append('file', csvFile);
+            try {
+                const res = await fetch('/api/ingest/csv', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.error) { showStatus('error', data.error); return; }
+                currentSourceName = data.source_name;
+                currentSourceType = data.source_type;
+                showPreview(data.entries);
+                showStatus('success', `Extracted ${data.entries.length} pricing entries. Review and confirm below.`);
+            } catch (e) { showStatus('error', 'Upload failed: ' + e.message); }
+        }
+
+        // ── URL Scrape ──
+        function addUrlRow() {
+            const row = document.createElement('div');
+            row.className = 'url-row';
+            row.innerHTML = '<input class="url-input" type="url" placeholder="https://hospital.com/packages"><button class="url-remove" onclick="this.parentElement.remove()" title="Remove">×</button>';
+            document.getElementById('url-area').appendChild(row);
+        }
+
+        async function extractUrls() {
+            const urls = [...document.querySelectorAll('#url-area .url-input')].map(i => i.value.trim()).filter(Boolean);
+            if (!urls.length) { showStatus('error', 'Add at least one URL'); return; }
+            showStatus('info', '<span class="spinner"></span> Scraping and extracting pricing data...');
+            try {
+                const res = await fetch('/api/ingest/url', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ urls })
+                });
+                const data = await res.json();
+                if (data.error) { showStatus('error', data.error); return; }
+                currentSourceName = data.source_name;
+                currentSourceType = data.source_type;
+                showPreview(data.entries);
+                let msg = `Extracted ${data.entries.length} pricing entries.`;
+                if (data.scrape_errors?.length) msg += ` (${data.scrape_errors.length} URL(s) failed)`;
+                showStatus('success', msg);
+            } catch (e) { showStatus('error', 'Scrape failed: ' + e.message); }
+        }
+
+        // ── Image Upload ──
+        let imageFiles = null;
+        function handleImageUpload(input) {
+            imageFiles = input.files;
+            if (imageFiles.length) {
+                const names = [...imageFiles].map(f => f.name).join(', ');
+                document.getElementById('image-filenames').textContent = '📎 ' + names;
+                document.getElementById('image-filenames').style.display = 'block';
+                document.getElementById('image-extract-btn').disabled = false;
+            }
+        }
+
+        async function extractImages() {
+            if (!imageFiles || !imageFiles.length) return;
+            showStatus('info', '<span class="spinner"></span> Processing images with Claude Vision...');
+            const fd = new FormData();
+            for (const f of imageFiles) fd.append('files', f);
+            try {
+                const res = await fetch('/api/ingest/image', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.error) { showStatus('error', data.error); return; }
+                currentSourceName = data.source_name;
+                currentSourceType = data.source_type;
+                showPreview(data.entries);
+                showStatus('success', `Extracted ${data.entries.length} entries from ${data.files_processed} file(s). Review below.`);
+            } catch (e) { showStatus('error', 'Processing failed: ' + e.message); }
+        }
+
+        // ── Preview ──
+        function showPreview(entries) {
+            extractedEntries = entries;
+            const body = document.getElementById('preview-body');
+            body.innerHTML = '';
+            entries.forEach((e, i) => {
+                const comps = (e.components || []).map(c => c.type).join(', ') || '—';
+                const costMin = e.total_cost_min ? '₹' + Number(e.total_cost_min).toLocaleString('en-IN') : '?';
+                const costMax = e.total_cost_max ? '₹' + Number(e.total_cost_max).toLocaleString('en-IN') : '?';
+                const stay = e.is_daycare ? 'Daycare' : (e.stay_days_min ? `${e.stay_days_min}–${e.stay_days_max || e.stay_days_min} days` : '—');
+                body.innerHTML += `<tr id="row-${i}">
+                    <td><strong>${e.treatment_name || '—'}</strong></td>
+                    <td>${e.hospital_name || '—'}</td>
+                    <td>${e.city || '—'}</td>
+                    <td>${costMin} – ${costMax}</td>
+                    <td>${stay}</td>
+                    <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis">${comps}</td>
+                    <td><span class="remove-row" onclick="removeEntry(${i})">remove</span></td>
+                </tr>`;
+            });
+            document.getElementById('preview-count').textContent = entries.length + ' entries';
+            document.getElementById('preview-area').style.display = 'block';
+        }
+
+        function removeEntry(i) {
+            extractedEntries.splice(i, 1);
+            showPreview(extractedEntries);
+        }
+
+        function clearPreview() {
+            extractedEntries = [];
+            document.getElementById('preview-area').style.display = 'none';
+            document.getElementById('status-msg').style.display = 'none';
+        }
+
+        async function confirmSave() {
+            if (!extractedEntries.length) return;
+            showStatus('info', '<span class="spinner"></span> Saving to database...');
+            try {
+                const res = await fetch('/api/ingest/confirm', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        entries: extractedEntries,
+                        source_name: currentSourceName,
+                        source_type: currentSourceType
+                    })
+                });
+                const data = await res.json();
+                if (data.error) { showStatus('error', data.error); return; }
+                showStatus('success', `✓ Saved ${data.saved} of ${data.total} entries to the database. The cost engine will use this data for better predictions.`);
+                document.getElementById('preview-area').style.display = 'none';
+                extractedEntries = [];
+            } catch (e) { showStatus('error', 'Save failed: ' + e.message); }
+        }
+
+        function showStatus(type, msg) {
+            const el = document.getElementById('status-msg');
+            el.className = 'status-msg ' + type;
+            el.innerHTML = msg;
+            el.style.display = 'block';
+        }
+
+        // Drag & drop
+        ['csv-drop', 'image-drop'].forEach(id => {
+            const zone = document.getElementById(id);
+            if (!zone) return;
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault(); zone.classList.remove('dragover');
+                if (id === 'csv-drop') {
+                    const dt = new DataTransfer();
+                    dt.items.add(e.dataTransfer.files[0]);
+                    document.getElementById('csv-file').files = dt.files;
+                    handleCsvUpload(document.getElementById('csv-file'));
+                } else {
+                    document.getElementById('image-files').files = e.dataTransfer.files;
+                    handleImageUpload(document.getElementById('image-files'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

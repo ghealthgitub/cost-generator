@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ginger Universe — Cost Generator</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;overflow:hidden}
+        .brand-panel{
+            flex:1;background:linear-gradient(160deg,#0B2545 0%,#13315C 50%,#0E4D6B 100%);
+            display:flex;flex-direction:column;justify-content:center;align-items:center;
+            padding:60px;color:white;position:relative;overflow:hidden;
+        }
+        .brand-panel::before{
+            content:'';position:absolute;width:500px;height:500px;
+            background:radial-gradient(circle,rgba(14,165,160,.12) 0%,transparent 70%);
+            top:-100px;right:-100px;border-radius:50%;
+        }
+        .brand-panel::after{
+            content:'';position:absolute;width:400px;height:400px;
+            background:radial-gradient(circle,rgba(242,101,34,.08) 0%,transparent 70%);
+            bottom:-80px;left:-80px;border-radius:50%;
+        }
+        .brand-content{position:relative;z-index:1;text-align:center;max-width:440px}
+        .brand-logo{width:80px;height:80px;border-radius:20px;overflow:hidden;margin-bottom:28px;box-shadow:0 12px 40px rgba(242,101,34,.3)}
+        .brand-logo img{width:100%;height:100%;object-fit:cover}
+        .brand-content h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;margin-bottom:8px;line-height:1.2}
+        .brand-content h1 span{color:#0EA5A0}
+        .brand-tagline{font-size:16px;opacity:.7;margin-bottom:40px;line-height:1.6}
+        .brand-features{text-align:left;display:flex;flex-direction:column;gap:16px}
+        .brand-feature{display:flex;align-items:flex-start;gap:14px;font-size:14px;opacity:.85}
+        .brand-feature .icon{width:36px;height:36px;background:rgba(14,165,160,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+        .brand-feature strong{display:block;color:#6EE7B7;font-size:13px;margin-bottom:2px}
+
+        .login-panel{width:480px;display:flex;align-items:center;justify-content:center;padding:40px;background:#fff}
+        .login-card{width:100%;max-width:360px}
+        .login-card h2{font-family:'Playfair Display',serif;font-size:26px;color:#0B2545;margin-bottom:6px}
+        .login-card .subtitle{color:#6B7280;font-size:14px;margin-bottom:28px}
+        .form-group{margin-bottom:18px}
+        .form-group label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+        .form-group input{width:100%;padding:12px 14px;border:2px solid #E5E7EB;border-radius:8px;font-size:15px;font-family:inherit;transition:border-color .2s}
+        .form-group input:focus{outline:none;border-color:#0EA5A0;box-shadow:0 0 0 3px rgba(14,165,160,.1)}
+        .error-msg{background:#FEE2E2;color:#991B1B;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;border:1px solid #FECACA}
+        .btn-login{width:100%;padding:13px;background:linear-gradient(135deg,#0B2545,#13315C);color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+        .btn-login:hover{background:linear-gradient(135deg,#13315C,#1A3F6F);transform:translateY(-1px)}
+        .login-footer{text-align:center;margin-top:28px;font-size:12px;color:#9CA3AF}
+        .login-footer a{color:#0EA5A0;text-decoration:none}
+        @media(max-width:900px){body{flex-direction:column}.brand-panel{padding:40px 24px;min-height:auto;flex:none}.brand-features{display:none}.login-panel{width:100%;flex:1}}
+    </style>
+</head>
+<body>
+    <div class="brand-panel">
+        <div class="brand-content">
+            <div class="brand-logo"><img src="/static/logo.png" alt="Ginger Healthcare"></div>
+            <h1>Cost <span>Generator</span></h1>
+            <div class="brand-tagline">AI-powered treatment cost estimation for ginger.healthcare — learn from real hospital data, generate intelligent cost breakdowns.</div>
+            <div class="brand-features">
+                <div class="brand-feature">
+                    <div class="icon">📊</div>
+                    <div><strong>Smart Ingestion</strong>Upload CSV, scrape hospital URLs, or scan rate card images</div>
+                </div>
+                <div class="brand-feature">
+                    <div class="icon">🧠</div>
+                    <div><strong>AI Cost Engine</strong>Claude reads treatment articles and predicts component-level costs</div>
+                </div>
+                <div class="brand-feature">
+                    <div class="icon">💊</div>
+                    <div><strong>800+ Treatments</strong>Generate cost sections for every treatment on your platform</div>
+                </div>
+                <div class="brand-feature">
+                    <div class="icon">⚡</div>
+                    <div><strong>Counselor Estimates</strong>Instant cost predictions for any procedure — even ad-hoc queries</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-panel">
+        <div class="login-card">
+            <h2>Welcome back</h2>
+            <div class="subtitle">Sign in to the cost generator</div>
+            {% if error %}
+                <div class="error-msg">{{ error }}</div>
+            {% endif %}
+            <form method="POST">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autofocus placeholder="you@ginger.healthcare">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-login">Sign In</button>
+            </form>
+            <div class="login-footer">
+                <a href="https://ginger.healthcare">ginger.healthcare</a> · Cost Generator v1
+            </div>
+        </div>
+    </div>
+</body>
+</html>

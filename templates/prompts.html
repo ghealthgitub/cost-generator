@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompts — Cost Generator</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:#F0F2F5;color:#1F2937;min-height:100vh}
+        .topbar{background:linear-gradient(135deg,#0B2545,#13315C);color:white;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(11,37,69,.25);position:sticky;top:0;z-index:100}
+        .topbar-left{display:flex;align-items:center;gap:12px}
+        .topbar-logo{width:34px;height:34px;border-radius:9px;overflow:hidden;flex-shrink:0}
+        .topbar-logo img{width:100%;height:100%;object-fit:cover}
+        .topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+        .topbar-right{display:flex;align-items:center;gap:14px;font-size:13px}
+        .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+        .badge-green{background:rgba(16,185,129,.2);color:#6EE7B7}
+        .badge-amber{background:rgba(251,191,36,.2);color:#FCD34D}
+        .topbar-nav{display:flex;gap:4px}
+        .topbar-nav a{color:rgba(255,255,255,.7);text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;transition:all .2s}
+        .topbar-nav a:hover,.topbar-nav a.active{background:rgba(255,255,255,.1);color:white}
+        .btn-sm{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;text-decoration:none}
+        .btn-ghost{background:rgba(255,255,255,.1);color:white}
+
+        .main{max-width:1100px;margin:24px auto;padding:0 20px}
+        .card{background:white;border-radius:12px;padding:24px;border:1px solid #E5E7EB;margin-bottom:20px}
+        .card h2{font-family:'Playfair Display',serif;font-size:18px;color:#0B2545;margin-bottom:4px}
+        .card .desc{font-size:13px;color:#6B7280;margin-bottom:16px}
+
+        .prompt-tabs{display:flex;gap:4px;margin-bottom:20px}
+        .prompt-tab{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid #E5E7EB;background:white;color:#6B7280;font-family:inherit;transition:all .2s}
+        .prompt-tab.active{border-color:#0EA5A0;background:#F0FDFA;color:#0EA5A0}
+
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+        .form-group input{width:100%;padding:10px 14px;border:2px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit}
+        .form-group input:focus{outline:none;border-color:#0EA5A0}
+        .form-group textarea{width:100%;min-height:400px;padding:14px;border:2px solid #E5E7EB;border-radius:8px;font-family:'DM Sans',monospace;font-size:13px;line-height:1.6;resize:vertical}
+        .form-group textarea:focus{outline:none;border-color:#0EA5A0}
+
+        .btn{padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:all .2s}
+        .btn-primary{background:linear-gradient(135deg,#0B2545,#13315C);color:white}
+        .btn-primary:hover{transform:translateY(-1px)}
+        .btn-success{background:#059669;color:white}
+        .btn-outline{background:white;color:#374151;border:2px solid #E5E7EB}
+
+        .prompt-list{margin-top:20px;border-top:1px solid #E5E7EB;padding-top:16px}
+        .prompt-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6;font-size:13px}
+        .prompt-item:last-child{border-bottom:none}
+        .prompt-name{flex:1;font-weight:600;color:#0B2545}
+        .prompt-meta{font-size:11px;color:#9CA3AF}
+        .active-badge{background:#ECFDF5;color:#059669;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+
+        .status-msg{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;display:none}
+        .status-msg.success{background:#ECFDF5;color:#065F46;display:block}
+        .status-msg.error{background:#FEE2E2;color:#991B1B;display:block}
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo"><img src="/static/logo-small.png" alt=""></div>
+            <div class="topbar-title">Cost Generator</div>
+        </div>
+        <div class="topbar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ingest">Ingest Data</a>
+            <a href="/generator">Generator</a>
+            <a href="/prompts" class="active">Prompts</a>
+            <a href="/api-docs">API</a>
+        </div>
+        <div class="topbar-right">
+            <span>{{ user.name or user.email }}</span>
+            <a href="/logout" class="btn-sm btn-ghost">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h2>Prompt Management</h2>
+            <div class="desc">Edit the prompts that control how Claude extracts and generates cost data. The active prompt for each type is used in all operations.</div>
+
+            <div class="prompt-tabs">
+                <button class="prompt-tab active" onclick="switchPromptType('generation')">💰 Generation Prompt</button>
+                <button class="prompt-tab" onclick="switchPromptType('extraction')">📥 Extraction Prompt</button>
+            </div>
+
+            <div class="form-group">
+                <label>Prompt Name</label>
+                <input type="text" id="prompt-name" placeholder="e.g. Generation Prompt v2">
+            </div>
+
+            <div class="form-group">
+                <label>Prompt Text</label>
+                <textarea id="prompt-text" placeholder="Enter the prompt template..."></textarea>
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn btn-success" onclick="savePrompt(true)">Save &amp; Set as Active</button>
+                <button class="btn btn-outline" onclick="savePrompt(false)">Save as Inactive</button>
+            </div>
+
+            <div id="prompt-status" class="status-msg"></div>
+
+            <!-- Existing prompts -->
+            <div class="prompt-list" id="prompt-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentType = 'generation';
+        let promptsData = {{ prompts | tojson }};
+
+        function switchPromptType(type) {
+            currentType = type;
+            document.querySelectorAll('.prompt-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadPromptForType();
+        }
+
+        function loadPromptForType() {
+            const typePrompts = promptsData.filter(p => p.prompt_type === currentType);
+            const active = typePrompts.find(p => p.is_active);
+            if (active) {
+                document.getElementById('prompt-name').value = active.name || '';
+                document.getElementById('prompt-text').value = active.prompt_text || '';
+            } else {
+                document.getElementById('prompt-name').value = '';
+                document.getElementById('prompt-text').value = '';
+            }
+            // Show list
+            const list = document.getElementById('prompt-list');
+            list.innerHTML = '<h3 style="font-size:14px;font-weight:600;color:#0B2545;margin-bottom:8px">All ' + currentType + ' prompts</h3>';
+            typePrompts.forEach(p => {
+                list.innerHTML += `<div class="prompt-item">
+                    <span class="prompt-name">${p.name} ${p.is_active ? '<span class="active-badge">ACTIVE</span>' : ''}</span>
+                    <span class="prompt-meta">${p.created_by || '—'}</span>
+                    <button class="btn-sm btn-outline" onclick="loadPrompt(${p.id})">Edit</button>
+                </div>`;
+            });
+        }
+
+        function loadPrompt(id) {
+            const p = promptsData.find(x => x.id === id);
+            if (p) {
+                document.getElementById('prompt-name').value = p.name || '';
+                document.getElementById('prompt-text').value = p.prompt_text || '';
+            }
+        }
+
+        async function savePrompt(setActive) {
+            const name = document.getElementById('prompt-name').value.trim();
+            const text = document.getElementById('prompt-text').value.trim();
+            if (!name || !text) {
+                showPromptStatus('error', 'Name and prompt text are required');
+                return;
+            }
+            try {
+                const res = await fetch('/api/prompts', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name, prompt_type: currentType,
+                        prompt_text: text, set_active: setActive
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showPromptStatus('success', setActive ? 'Saved and set as active prompt!' : 'Saved.');
+                    // Reload prompts
+                    const pRes = await fetch('/api/prompts');
+                    promptsData = await pRes.json();
+                    loadPromptForType();
+                } else {
+                    showPromptStatus('error', 'Save failed');
+                }
+            } catch(e) { showPromptStatus('error', e.message); }
+        }
+
+        function showPromptStatus(type, msg) {
+            const el = document.getElementById('prompt-status');
+            el.className = 'status-msg ' + type;
+            el.textContent = msg;
+        }
+
+        loadPromptForType();
+    </script>
+</body>
+</html>

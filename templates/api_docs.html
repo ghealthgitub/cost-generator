@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Docs — Cost Generator</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:#F0F2F5;color:#1F2937;min-height:100vh}
+        .topbar{background:linear-gradient(135deg,#0B2545,#13315C);color:white;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(11,37,69,.25);position:sticky;top:0;z-index:100}
+        .topbar-left{display:flex;align-items:center;gap:12px}
+        .topbar-logo{width:34px;height:34px;border-radius:9px;overflow:hidden;flex-shrink:0}
+        .topbar-logo img{width:100%;height:100%;object-fit:cover}
+        .topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+        .topbar-right{display:flex;align-items:center;gap:14px;font-size:13px}
+        .topbar-nav{display:flex;gap:4px}
+        .topbar-nav a{color:rgba(255,255,255,.7);text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;transition:all .2s}
+        .topbar-nav a:hover,.topbar-nav a.active{background:rgba(255,255,255,.1);color:white}
+        .btn-sm{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;text-decoration:none}
+        .btn-ghost{background:rgba(255,255,255,.1);color:white}
+
+        .main{max-width:900px;margin:24px auto;padding:0 20px}
+        .card{background:white;border-radius:12px;padding:28px;border:1px solid #E5E7EB;margin-bottom:20px}
+        .card h2{font-family:'Playfair Display',serif;font-size:20px;color:#0B2545;margin-bottom:8px}
+        .card .desc{font-size:14px;color:#6B7280;margin-bottom:20px;line-height:1.6}
+
+        .endpoint{border:1px solid #E5E7EB;border-radius:10px;padding:20px;margin-bottom:16px;transition:border-color .2s}
+        .endpoint:hover{border-color:#0EA5A0}
+        .endpoint-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+        .method{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .method-get{background:#ECFDF5;color:#059669}
+        .endpoint-path{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:#0B2545}
+        .endpoint-desc{font-size:13px;color:#6B7280;margin-bottom:12px;line-height:1.5}
+        .code-block{background:#1E293B;color:#E2E8F0;padding:16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;overflow-x:auto;margin-top:8px}
+        .code-block .comment{color:#64748B}
+        .code-block .string{color:#6EE7B7}
+        .code-block .key{color:#93C5FD}
+
+        .param-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+        .param-table th{text-align:left;padding:8px;background:#F9FAFB;color:#374151;font-weight:600;border-bottom:2px solid #E5E7EB}
+        .param-table td{padding:8px;border-bottom:1px solid #F3F4F6}
+        .param-name{font-family:'JetBrains Mono',monospace;font-weight:500;color:#0B2545}
+        .param-type{font-size:11px;color:#6B7280;background:#F3F4F6;padding:2px 6px;border-radius:4px}
+
+        .note{background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400E;line-height:1.5}
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo"><img src="/static/logo-small.png" alt=""></div>
+            <div class="topbar-title">Cost Generator</div>
+        </div>
+        <div class="topbar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ingest">Ingest Data</a>
+            <a href="/generator">Generator</a>
+            {% if user.role == 'super_admin' %}<a href="/prompts">Prompts</a>{% endif %}
+            <a href="/api-docs" class="active">API</a>
+        </div>
+        <div class="topbar-right">
+            <span>{{ user.name or user.email }}</span>
+            <a href="/logout" class="btn-sm btn-ghost">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h2>Public API</h2>
+            <div class="desc">These endpoints serve cost data to ginger.healthcare. No authentication required — designed to be called from your website frontend or backend.</div>
+
+            <!-- Endpoint 1 -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/cost-section/{treatment_id}</span>
+                </div>
+                <div class="endpoint-desc">Returns the approved HTML cost section for a treatment page. Use this to embed cost breakdowns directly on your treatment pages.</div>
+                <table class="param-table">
+                    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td class="param-name">treatment_id</td><td><span class="param-type">integer</span></td><td>Treatment ID from your treatments table</td></tr>
+                    </tbody>
+                </table>
+                <div class="code-block">
+<span class="comment">// Response (approved section exists)</span>
+{
+  <span class="key">"available"</span>: <span class="string">true</span>,
+  <span class="key">"treatment_id"</span>: 42,
+  <span class="key">"treatment_name"</span>: <span class="string">"Total Knee Replacement"</span>,
+  <span class="key">"html"</span>: <span class="string">"&lt;div class='cost-section'&gt;...&lt;/div&gt;"</span>,
+  <span class="key">"updated_at"</span>: <span class="string">"2026-03-17T10:30:00"</span>
+}
+
+<span class="comment">// Response (not available)</span>
+{ <span class="key">"available"</span>: <span class="string">false</span> }
+                </div>
+            </div>
+
+            <!-- Endpoint 2 -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/cost-estimate?q={procedure_name}</span>
+                </div>
+                <div class="endpoint-desc">Returns an AI-generated cost estimate for any procedure name. Useful for search results, chatbots, or counselor tools. Uses Claude to generate estimates in real-time.</div>
+                <table class="param-table">
+                    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td class="param-name">q</td><td><span class="param-type">string</span></td><td>Procedure name (e.g. "CABG", "PET CT Scan", "Robotic Prostatectomy")</td></tr>
+                    </tbody>
+                </table>
+                <div class="code-block">
+<span class="comment">// Response</span>
+{
+  <span class="key">"procedure"</span>: <span class="string">"Robotic Prostatectomy"</span>,
+  <span class="key">"html"</span>: <span class="string">"&lt;div class='estimate-result'&gt;...&lt;/div&gt;"</span>
+}
+                </div>
+            </div>
+
+            <!-- Endpoint 3 -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/treatments/covered</span>
+                </div>
+                <div class="endpoint-desc">Lists all treatments that have approved cost sections. Use this to know which treatment pages can display cost data.</div>
+                <div class="code-block">
+<span class="comment">// Response</span>
+[
+  {
+    <span class="key">"treatment_id"</span>: 42,
+    <span class="key">"treatment_name"</span>: <span class="string">"Total Knee Replacement"</span>,
+    <span class="key">"specialty_name"</span>: <span class="string">"Orthopaedics"</span>,
+    <span class="key">"updated_at"</span>: <span class="string">"2026-03-17T10:30:00"</span>
+  },
+  ...
+]
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Integration Example</h2>
+            <div class="desc">Here's how to embed cost sections on your treatment pages:</div>
+            <div class="code-block">
+<span class="comment">// On your treatment page (JavaScript)</span>
+const treatmentId = 42; <span class="comment">// From your page context</span>
+const BASE = <span class="string">'https://costs.ginger.healthcare'</span>;
+
+fetch(`${BASE}/api/v1/cost-section/${treatmentId}`)
+  .then(r => r.json())
+  .then(data => {
+    if (data.available) {
+      document.getElementById(<span class="string">'cost-section'</span>)
+        .innerHTML = data.html;
+    }
+  });
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>Note:</strong> The cost estimate endpoint (/api/v1/cost-estimate) calls Claude in real-time, so it has a ~3-5 second response time. For production use, consider caching responses. The cost section endpoint returns pre-generated HTML and is instant.
+        </div>
+    </div>
+</body>
+</html>
