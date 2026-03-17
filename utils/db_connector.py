@@ -286,7 +286,7 @@ def get_specialties_list():
         return []
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT id, name FROM specialties WHERE is_active = true ORDER BY name")
+            cur.execute("SELECT id, name FROM specialties WHERE status = 'published' ORDER BY name")
             return cur.fetchall()
     except Exception as e:
         print(f"[Specialties Error] {e}")
@@ -307,7 +307,7 @@ def get_treatments_by_specialty(specialty_id=None):
                            t.description, t.content
                     FROM treatments t
                     LEFT JOIN specialties s ON t.specialty_id = s.id
-                    WHERE t.specialty_id = %s AND t.is_active = true
+                    WHERE t.specialty_id = %s AND t.status = 'published'
                     ORDER BY t.name
                 """, [specialty_id])
             else:
@@ -316,7 +316,7 @@ def get_treatments_by_specialty(specialty_id=None):
                            t.description, t.content
                     FROM treatments t
                     LEFT JOIN specialties s ON t.specialty_id = s.id
-                    WHERE t.is_active = true
+                    WHERE t.status = 'published'
                     ORDER BY s.name, t.name
                 """)
             return cur.fetchall()
@@ -354,7 +354,7 @@ def get_hospitals_list():
         return []
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT id, name, city FROM hospitals WHERE is_active = true ORDER BY name")
+            cur.execute("SELECT id, name, city FROM hospitals WHERE status = 'published' ORDER BY name")
             return cur.fetchall()
     except Exception as e:
         print(f"[Hospitals Error] {e}")
@@ -373,7 +373,7 @@ def search_treatments(query):
                 SELECT t.id, t.name, t.slug, s.name as specialty_name
                 FROM treatments t
                 LEFT JOIN specialties s ON t.specialty_id = s.id
-                WHERE t.is_active = true AND t.name ILIKE %s
+                WHERE t.status = 'published' AND t.name ILIKE %s
                 ORDER BY t.name LIMIT 20
             """, [f"%{query}%"])
             return cur.fetchall()
@@ -718,7 +718,7 @@ def get_generation_stats():
         return {'total_treatments': 0, 'generated': 0, 'approved': 0, 'data_points': 0, 'hospitals_covered': 0}
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) FROM treatments WHERE is_active = true")
+            cur.execute("SELECT COUNT(*) FROM treatments WHERE status = 'published'")
             total = cur.fetchone()[0]
 
             cur.execute("SELECT COUNT(*) FROM cost_generated")
@@ -768,9 +768,9 @@ def get_specialty_coverage():
                        COUNT(DISTINCT cg.treatment_id) as generated_count,
                        COUNT(DISTINCT CASE WHEN cg.status = 'approved' THEN cg.treatment_id END) as approved_count
                 FROM specialties s
-                LEFT JOIN treatments t ON t.specialty_id = s.id AND t.is_active = true
+                LEFT JOIN treatments t ON t.specialty_id = s.id AND t.status = 'published'
                 LEFT JOIN cost_generated cg ON cg.treatment_id = t.id
-                WHERE s.is_active = true
+                WHERE s.status = 'published'
                 GROUP BY s.id, s.name
                 HAVING COUNT(DISTINCT t.id) > 0
                 ORDER BY s.name
