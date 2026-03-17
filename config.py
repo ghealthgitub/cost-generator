@@ -14,3 +14,6 @@ ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 DEBUG = os.environ.get('DEBUG', 'false').lower() == 'true'
 SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32).hex())
 ADMIN_URL = os.environ.get('ADMIN_URL', 'https://enter.ginger.healthcare')
+
+# ── Password Reset ───────────────────────────────────────────
+RESET_SECRET = os.environ.get('RESET_SECRET', '')

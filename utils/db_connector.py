@@ -253,6 +253,29 @@ def authenticate_user(email, password):
     return None
 
 
+def reset_user_password(email, new_password):
+    """Reset a user's password by email"""
+    conn = get_conn()
+    if not conn:
+        return False, "Database not available"
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT id, email FROM users WHERE email = %s AND is_active = true", [email])
+            user = cur.fetchone()
+            if not user:
+                return False, "No active user found with that email"
+            new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", [new_hash, user['id']])
+            conn.commit()
+            return True, "Password updated successfully"
+    except Exception as e:
+        print(f"[Reset Error] {e}")
+        conn.rollback()
+        return False, str(e)
+    finally:
+        conn.close()
+
+
 # ═══════════════════════════════════════════════════════════════
 # READ EXISTING TABLES — Treatments, Specialties, Hospitals
 # ═══════════════════════════════════════════════════════════════

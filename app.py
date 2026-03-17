@@ -11,7 +11,7 @@ from datetime import datetime
 
 import config
 from utils.db_connector import (
-    init_cost_tables, authenticate_user,
+    init_cost_tables, authenticate_user, reset_user_password,
     get_specialties_list, get_treatments_by_specialty, get_treatment_by_id,
     get_hospitals_list, search_treatments,
     save_cost_source, get_recent_sources,
@@ -94,6 +94,34 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        secret = request.form.get('secret', '').strip()
+        new_pass = request.form.get('new_password', '')
+        confirm_pass = request.form.get('confirm_password', '')
+
+        if not config.RESET_SECRET:
+            return render_template('reset_password.html', error="Reset not configured. Set RESET_SECRET env variable.")
+        if secret != config.RESET_SECRET:
+            return render_template('reset_password.html', error="Invalid reset key.")
+        if not email or not new_pass:
+            return render_template('reset_password.html', error="All fields are required.")
+        if len(new_pass) < 6:
+            return render_template('reset_password.html', error="Password must be at least 6 characters.")
+        if new_pass != confirm_pass:
+            return render_template('reset_password.html', error="Passwords do not match.")
+
+        ok, msg = reset_user_password(email, new_pass)
+        if ok:
+            return render_template('reset_password.html', success="Password reset! You can now log in.")
+        else:
+            return render_template('reset_password.html', error=msg)
+
+    return render_template('reset_password.html')
 
 
 # ═══════════════════════════════════════════════════════════════
