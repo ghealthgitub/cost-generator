@@ -237,11 +237,11 @@ def authenticate_user(email, password):
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("""
-                SELECT id, name, email, password_hash, role, is_active
+                SELECT id, name, email, password, role, is_active
                 FROM users WHERE email = %s AND is_active = true
             """, [email])
             user = cur.fetchone()
-            if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+            if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                 return {
                     'id': user['id'], 'name': user['name'],
                     'email': user['email'], 'role': user['role']
@@ -265,7 +265,7 @@ def reset_user_password(email, new_password):
             if not user:
                 return False, "No active user found with that email"
             new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", [new_hash, user['id']])
+            cur.execute("UPDATE users SET password = %s WHERE id = %s", [new_hash, user['id']])
             conn.commit()
             return True, "Password updated successfully"
     except Exception as e:
